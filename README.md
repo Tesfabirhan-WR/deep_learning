@@ -49,20 +49,6 @@ headers = {
 }
 ```
 
-'''
-import os, re, time
-import requests, pandas as pd
-from bs4 import BeautifulSoup
-from urllib.robotparser import RobotFileParser
-
-BASE = os.environ.get("WIKI_BASE", "https://en.wikipedia.org")     # le site visé
-PAUSE = float(os.environ.get("WIKI_PAUSE", "1.0"))                 # secondes d'attente entre deux requêtes
-ENTETES = {"User-Agent": "TPFormation/1.0 (greetaiates@gmail.com) python-requests"}   # ⚠️ remplacez par VOTRE contact
-
-def controle(condition, ok, ko):
-    print("✅", ok) if condition else print("❌", ko)
-'''
-
 ### robots.txt Compliance
 
 Before scraping, the robots.txt file of each website was checked to ensure that only permitted pages were accessed.
@@ -74,24 +60,46 @@ Example workflow:
 3. Respect crawl restrictions
 4. Introduce request delays when necessary
 
+### Summary of ethical web-scrapping applied
+
+```
+def get(url, params=None, essais=3):
+    for n in range(essais):
+        time.sleep(PAUSE)                                   # pause : on ne harcèle pas le serveur
+        reponse = requests.get(url, params=params, headers=ENTETES, timeout=20)
+        if reponse.status_code == 200:
+            return reponse
+        if reponse.status_code in (429, 503):               # « trop de requêtes » : on attend plus longtemps
+            time.sleep(2 ** (n + 1))
+            continue
+        reponse.raise_for_status()
+    raise RuntimeError("Échec après " + str(essais) + " essais : " + url)
+```
+
+### Technics applied
+
+1. API
+2. Crawling
+3. Scraping
 ---
 
 ## Project Architecture
+<div align="center">
+
+<pre>
 
 ```text
-Web Sources
+`Web Sources
      │
      ▼
 Web Scraping
 (Awate + Wikipedia)
      │
      ▼
-Data Cleaning
+Loading data(corpus)
      │
      ▼
-Text Preprocessing
-(Tokenization, Cleaning,
- Stopword Removal)
+data clustering
      │
      ▼
 Text Vectorization
@@ -104,7 +112,11 @@ Model Evaluation
      │
      ▼
 Performance Comparison
+`
 ```
+</pre>
+
+</div>
 
 ---
 
@@ -112,7 +124,7 @@ Performance Comparison
 
 ### Programming Language
 
-- Python 3.x
+- Jupyter  notebook in vs code
 
 ### Libraries
 
@@ -232,15 +244,12 @@ Models were evaluated using the following metrics:
 - Validation Loss
 
 Example:
-
-| Model | Accuracy | Precision | Recall | F1 Score |
-|---------|---------|---------|---------|---------|
-| DNN | XX% | XX% | XX% | XX% |
-| CNN | XX% | XX% | XX% | XX% |
-| LSTM | XX% | XX% | XX% | XX% |
-| Bi-LSTM | XX% | XX% | XX% | XX% |
-| GRU | XX% | XX% | XX% | XX% |
-
+```
+| Model                     | Accuracy |
+| --------------------------| -------- |
+| Neural Network Model(NNM) | 79.1%    |
+| Regression Logistics      | 78.9%    |
+```
 ---
 
 ## Project Structure
@@ -248,92 +257,30 @@ Example:
 ```text
 deep-learning-text-classification/
 │
-├── data/
-│   ├── raw/
-│   ├── processed/
-│
-├── notebooks/
-│   └── exploratory_analysis.ipynb
+├──data/
+|   |__awate-articles.json
+|   |__corpus-secours.csv
+|   |__corpus.csv
 │
 ├── scraping/
-│   ├── awate_scraper.py
-│   ├── wikipedia_scraper.py
-│   └── robots_checker.py
-│
-├── preprocessing/
-│   └── text_preprocessing.py
+│   ├── corpus_scraper.py
+│   ├── tpa-collecter-complete.ipynb
 │
 ├── models/
-│   ├── dnn_model.py
-│   ├── cnn_model.py
-│   ├── lstm_model.py
-│   ├── bilstm_model.py
-│   └── gru_model.py
-│
-├── evaluation/
-│   └── model_comparison.py
-│
-├── requirements.txt
+│   ├──b-premier-reseau.ipynb
+|   |__c-optimiser-complete.ipynb
 │
 └── README.md
 ```
 
----
-
-## Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/yourusername/deep-learning-text-classification.git
+## Training parameters
+```
+1. test size = 0.25 (25%)
+2. random stae = 42
+3. Maximum features = 2000
+4. stop words = english
 ```
 
-Move to the project directory:
-
-```bash
-cd deep-learning-text-classification
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## Running the Project
-
-### Step 1: Run Web Scraping
-
-```bash
-python scraping/awate_scraper.py
-python scraping/wikipedia_scraper.py
-```
-
-### Step 2: Preprocess Data
-
-```bash
-python preprocessing/text_preprocessing.py
-```
-
-### Step 3: Train Models
-
-```bash
-python models/lstm_model.py
-```
-
-or
-
-```bash
-python models/cnn_model.py
-```
-
-### Step 4: Compare Results
-
-```bash
-python evaluation/model_comparison.py
-```
 
 ---
 
@@ -366,6 +313,7 @@ This project demonstrates skills in:
 - Natural Language Processing
 - Deep Learning
 - Text Classification
+- Matrix confusion
 - Model Evaluation
 - Python Development
 - Data Engineering Fundamentals
